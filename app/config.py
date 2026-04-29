@@ -13,3 +13,4 @@ class Config:
         ),
     )
     SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
+    SECRET_KEY: str = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
