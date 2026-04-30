@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import logging
 import os
 import secrets
 from urllib.parse import urlencode
@@ -9,6 +10,8 @@ from flask import Blueprint, redirect, request, session
 from sqlalchemy import text
 
 from app import db
+
+log = logging.getLogger(__name__)
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -38,17 +41,23 @@ def install():
     nonce = secrets.token_hex(16)
     session["oauth_state"] = nonce
 
+    redirect_uri = f"{_APP_URL()}/callback"
     params = urlencode({
         "client_id": _API_KEY(),
         "scope": _SCOPES(),
-        "redirect_uri": f"{_APP_URL()}/callback",
+        "redirect_uri": redirect_uri,
         "state": nonce,
     })
-    return redirect(f"https://{shop}/admin/oauth/authorize?{params}")
+    auth_url = f"https://{shop}/admin/oauth/authorize?{params}"
+    log.debug("[install] SHOPIFY_APP_URL=%s", os.environ.get("SHOPIFY_APP_URL"))
+    log.debug("[install] redirect_uri=%s", redirect_uri)
+    log.debug("[install] full auth URL=%s", auth_url)
+    return redirect(auth_url)
 
 
 @auth_bp.get("/callback")
 def callback():
+    log.debug("[callback] incoming args=%s", dict(request.args))
     shop = request.args.get("shop", "")
     code = request.args.get("code", "")
     state = request.args.get("state", "")
