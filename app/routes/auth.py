@@ -49,15 +49,11 @@ def install():
         "state": nonce,
     })
     auth_url = f"https://{shop}/admin/oauth/authorize?{params}"
-    log.debug("[install] SHOPIFY_APP_URL=%s", os.environ.get("SHOPIFY_APP_URL"))
-    log.debug("[install] redirect_uri=%s", redirect_uri)
-    log.debug("[install] full auth URL=%s", auth_url)
     return redirect(auth_url)
 
 
 @auth_bp.get("/callback")
 def callback():
-    log.debug("[callback] incoming args=%s", dict(request.args))
     shop = request.args.get("shop", "")
     code = request.args.get("code", "")
     state = request.args.get("state", "")
@@ -79,8 +75,10 @@ def callback():
     )
     resp.raise_for_status()
     access_token = resp.json()["access_token"]
+    log.info("[callback] received access_token for shop=%s token_prefix=%s", shop, access_token[:8])
 
-    db.session.execute(
+    log.info("[callback] executing upsert for shop=%s", shop)
+    result = db.session.execute(
         text(
             """
             INSERT INTO shops (shop_domain, access_token, email)
@@ -92,6 +90,8 @@ def callback():
         ),
         {"shop": shop, "token": access_token},
     )
+    log.info("[callback] upsert rowcount=%d", result.rowcount)
     db.session.commit()
+    log.info("[callback] commit complete")
 
     return redirect("/dashboard")

@@ -32,6 +32,6 @@ CREATE TABLE forecasts (
     id                    SERIAL PRIMARY KEY,
     product_id            INTEGER NOT NULL UNIQUE REFERENCES products(id),
     sales_velocity        NUMERIC(10,4) NOT NULL,
-    days_until_stockout   INTEGER NOT NULL CHECK (days_until_stockout > 0),
+    days_until_stockout   INTEGER NOT NULL CHECK (days_until_stockout >= 0),
     computed_at           TIMESTAMPTZ DEFAULT NOW()
 );
