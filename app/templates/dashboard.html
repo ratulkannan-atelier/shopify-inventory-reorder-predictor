@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4Sight — Inventory Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:          #f6f6f7;
+      --surface:     #ffffff;
+      --surface-alt: #f6f6f7;
+      --accent:      #008060;
+      --text:        #202223;
+      --muted:       #6d7175;
+      --border:      #e1e3e5;
+      --red:         #d82c0d;
+      --orange:      #ffc453;
+      --green:       #008060;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .wordmark { font-size: 1.25rem; font-weight: 800; white-space: nowrap; }
+    .wordmark .four { color: var(--accent); }
+
+    .header-center {
+      font-size: 0.825rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .header-right {
+      font-size: 0.75rem;
+      color: var(--muted);
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    /* ── Main ───────────────────────────────────────────── */
+    main {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ── Stats cards ────────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border-radius: 8px;
+      border-left: 3px solid var(--accent);
+      padding: 1.1rem 1.3rem;
+    }
+    .stat-card.red    { border-left-color: var(--red); }
+    .stat-card.orange { border-left-color: var(--orange); }
+    .stat-card.green  { border-left-color: var(--green); }
+
+    .stat-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      margin-bottom: 0.45rem;
+    }
+
+    .stat-value { font-size: 1.9rem; font-weight: 700; }
+    .stat-card.red    .stat-value { color: var(--red); }
+    .stat-card.orange .stat-value { color: var(--orange); }
+    .stat-card.green  .stat-value { color: var(--green); }
+
+    /* ── Filter bar ─────────────────────────────────────── */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .btn-toggle {
+      background: transparent;
+      border: 1.5px solid var(--accent);
+      color: var(--accent);
+      border-radius: 6px;
+      padding: 0.4rem 1rem;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-toggle.active {
+      background: var(--accent);
+      color: #0f172a;
+    }
+
+    .product-count { font-size: 0.8rem; color: var(--muted); }
+
+    /* ── Table ──────────────────────────────────────────── */
+    .table-wrap {
+      background: var(--surface);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead th {
+      padding: 0.75rem 1.1rem;
+      text-align: left;
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    thead th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+    thead th.sortable:hover { color: var(--text); }
+
+    .sort-icon {
+      margin-left: 4px;
+      display: inline-block;
+      opacity: 0.35;
+      font-style: normal;
+    }
+    .sortable:hover .sort-icon { opacity: 0.7; }
+    .sort-asc  .sort-icon,
+    .sort-desc .sort-icon { opacity: 1; color: var(--accent); }
+    .sort-asc  .sort-icon::after { content: "↑"; }
+    .sort-desc .sort-icon::after { content: "↓"; }
+    .sortable:not(.sort-asc):not(.sort-desc) .sort-icon::after { content: "↕"; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      border-left: 3px solid transparent;
+      transition: background 0.1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:nth-child(even) { background: var(--surface-alt); }
+    tbody tr:hover { background: #f6f6f7; }
+
+    tbody tr.row-critical { border-left-color: var(--red); }
+    tbody tr.row-warning  { border-left-color: var(--orange); }
+    tbody tr.row-healthy  { border-left-color: var(--green); }
+
+    td {
+      padding: 0.85rem 1.1rem;
+      font-size: 0.875rem;
+    }
+
+    .product-name { font-weight: 500; }
+
+    /* Pill badges for days column */
+    .pill {
+      display: inline-block;
+      padding: 0.22rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .pill-red    { background: #fce8e6; color: #d82c0d; }
+    .pill-orange { background: #fff0c4; color: #8a4b00; }
+    .pill-green  { background: #e3f1ee; color: #006e52; }
+
+    /* Status badges */
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .badge-red    { background: #fce8e6; color: #d82c0d; }
+    .badge-orange { background: #fff0c4; color: #8a4b00; }
+    .badge-green  { background: #e3f1ee; color: #006e52; }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    /* ── Responsive ─────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      header { padding: 0 1rem; }
+      .header-center { display: none; }
+      main { padding: 1rem; }
+      .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+      td, thead th { padding: 0.65rem 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+{# ── Compute summary counts ── #}
+{% set ns = namespace(critical=0, warning=0, healthy=0) %}
+{% for p in products %}
+  {% if p.days_until_stockout <= 14 %}
+    {% set ns.critical = ns.critical + 1 %}
+  {% elif p.days_until_stockout <= 30 %}
+    {% set ns.warning = ns.warning + 1 %}
+  {% else %}
+    {% set ns.healthy = ns.healthy + 1 %}
+  {% endif %}
+{% endfor %}
+
+{# ── Header ── #}
+<header>
+  <div class="wordmark"><span class="four">4</span>Sight</div>
+  <div class="header-center">Inventory Forecast Dashboard</div>
+  <div class="header-right">
+    {% if last_updated %}
+      Last updated: {{ last_updated.strftime("%b %d, %Y %H:%M UTC") }}
+    {% else %}
+      No data yet
+    {% endif %}
+  </div>
+</header>
+
+<main>
+
+  {# ── Stats cards ── #}
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Products Tracked</div>
+      <div class="stat-value">{{ products | length }}</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">Critical (&le;14 days)</div>
+      <div class="stat-value">{{ ns.critical }}</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-label">Warning (15–30 days)</div>
+      <div class="stat-value">{{ ns.warning }}</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Healthy (&gt;30 days)</div>
+      <div class="stat-value">{{ ns.healthy }}</div>
+    </div>
+  </div>
+
+  {# ── Filter bar ── #}
+  <div class="filter-bar">
+    <button class="btn-toggle" id="riskToggle" onclick="toggleAtRisk()">Show at-risk only</button>
+    <span class="product-count" id="productCount">
+      Showing {{ products | length }} of {{ products | length }} products
+    </span>
+  </div>
+
+  {# ── Table ── #}
+  <div class="table-wrap">
+    {% if products %}
+    <table id="forecastTable">
+      <thead>
+        <tr>
+          <th class="sortable" onclick="sortTable(0)">
+            Product<span class="sort-icon"></span>
+          </th>
+          <th class="sortable" data-type="number" onclick="sortTable(1)">
+            Current Stock<span class="sort-icon"></span>
+          </th>
+          <th class="sortable" data-type="number" onclick="sortTable(2)">
+            Daily Velocity<span class="sort-icon"></span>
+          </th>
+          <th class="sortable sort-asc" data-type="number" onclick="sortTable(3)">
+            Days Until Stockout<span class="sort-icon"></span>
+          </th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        {% for p in products %}
+        {% if p.days_until_stockout <= 14 %}
+          {% set row_class = "row-critical" %}{% set at_risk = "true" %}
+        {% elif p.days_until_stockout <= 30 %}
+          {% set row_class = "row-warning" %}{% set at_risk = "true" %}
+        {% else %}
+          {% set row_class = "row-healthy" %}{% set at_risk = "false" %}
+        {% endif %}
+        <tr class="{{ row_class }}" data-at-risk="{{ at_risk }}">
+          <td class="product-name">{{ p.title }}</td>
+          <td data-value="{{ p.current_inventory }}">{{ p.current_inventory }}</td>
+          <td data-value="{{ p.sales_velocity }}">{{ "%.2f"|format(p.sales_velocity) }} u/day</td>
+          <td data-value="{{ p.days_until_stockout }}">
+            {% if p.days_until_stockout == 0 %}
+              <span class="pill pill-red">Out of Stock</span>
+            {% elif p.days_until_stockout <= 14 %}
+              <span class="pill pill-red">{{ p.days_until_stockout }} days</span>
+            {% elif p.days_until_stockout <= 30 %}
+              <span class="pill pill-orange">{{ p.days_until_stockout }} days</span>
+            {% elif p.days_until_stockout <= 90 %}
+              <span class="pill pill-green">{{ p.days_until_stockout }} days</span>
+            {% else %}
+              <span class="pill pill-green">90+ days</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if p.days_until_stockout == 0 or p.days_until_stockout <= 14 %}
+              <span class="badge badge-red">Critical</span>
+            {% elif p.days_until_stockout <= 30 %}
+              <span class="badge badge-orange">Warning</span>
+            {% else %}
+              <span class="badge badge-green">OK</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">No forecast data yet. Run the fetcher and worker first.</div>
+    {% endif %}
+  </div>
+
+</main>
+
+
+<script>
+  var atRiskOnly = false;
+  var totalCount = {{ products | length }};
+  var currentSortCol = 3;
+  var currentSortAsc = true;
+
+  function toggleAtRisk() {
+    atRiskOnly = !atRiskOnly;
+    document.getElementById('riskToggle').classList.toggle('active', atRiskOnly);
+    applyFilter();
+  }
+
+  function applyFilter() {
+    var rows = document.querySelectorAll('#tableBody tr');
+    var visible = 0;
+    rows.forEach(function(row) {
+      var show = !atRiskOnly || row.dataset.atRisk === 'true';
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    document.getElementById('productCount').textContent =
+      'Showing ' + visible + ' of ' + totalCount + ' products';
+  }
+
+  function sortTable(col) {
+    var headers = document.querySelectorAll('thead th.sortable');
+    var isNumber = headers[col] && headers[col].dataset.type === 'number';
+
+    if (currentSortCol === col) {
+      currentSortAsc = !currentSortAsc;
+    } else {
+      currentSortCol = col;
+      currentSortAsc = true;
+    }
+
+    headers.forEach(function(th) { th.classList.remove('sort-asc', 'sort-desc'); });
+    if (headers[col]) {
+      headers[col].classList.add(currentSortAsc ? 'sort-asc' : 'sort-desc');
+    }
+
+    var tbody = document.getElementById('tableBody');
+    var rows = Array.from(tbody.querySelectorAll('tr'));
+
+    rows.sort(function(a, b) {
+      var aCell = a.querySelectorAll('td')[col];
+      var bCell = b.querySelectorAll('td')[col];
+      var aVal = aCell ? (aCell.dataset.value !== undefined ? aCell.dataset.value : aCell.textContent.trim()) : '';
+      var bVal = bCell ? (bCell.dataset.value !== undefined ? bCell.dataset.value : bCell.textContent.trim()) : '';
+
+      if (isNumber) {
+        aVal = parseFloat(aVal) || 0;
+        bVal = parseFloat(bVal) || 0;
+        return currentSortAsc ? aVal - bVal : bVal - aVal;
+      }
+      return currentSortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    });
+
+    rows.forEach(function(row) { tbody.appendChild(row); });
+    applyFilter();
+  }
+</script>
+
+</body>
+</html>
