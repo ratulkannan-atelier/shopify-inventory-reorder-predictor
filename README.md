@@ -1,6 +1,6 @@
 # 4Sight
 
-**Predict when your Shopify products will run out of stock — before they do.**
+**Predict when your Shopify products will run out of stock before they do.**
 
 [![Live on AWS](https://img.shields.io/badge/Live-AWS-ff9900)](http://foursight-alb-668338117.us-east-1.elb.amazonaws.com)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776ab)](https://www.python.org/)
