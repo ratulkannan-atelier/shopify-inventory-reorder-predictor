@@ -29,8 +29,8 @@ The result is a triage view: red for products less than two weeks out, orange fo
 
 ## Architecture
 
-![4Sight AWS Architecture](architecture.png)
-*AWS infrastructure — solid borders are live, dashed are planned*
+![4Sight AWS Architecture](architecture.png.png)
+*AWS infrastructure  (solid borders are live, dashed are planned)*
 
 The web tier (Flask on Fargate behind an ALB) is live on AWS. The scheduled fetcher path (EventBridge → Lambda → SQS → worker) is on the roadmap; today the fetcher and worker run as in-process modules invoked manually.
 
