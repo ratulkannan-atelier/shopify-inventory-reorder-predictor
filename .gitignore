@@ -33,3 +33,7 @@ Thumbs.db
 # Project notes
 NOTES.md.txt
 CLAUDE.md
+terraform/terraform.tfvars
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
