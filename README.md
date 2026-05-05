@@ -8,7 +8,7 @@
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791)](https://www.postgresql.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-**Live demo:** http://foursight-alb-668338117.us-east-1.elb.amazonaws.com
+**Live demo:** http://foursight-alb-668338117.us-east-1.elb.amazonaws.com/dashboard
 
 **About the demo data:**
 The live dashboard connects to a Shopify development store with real 
