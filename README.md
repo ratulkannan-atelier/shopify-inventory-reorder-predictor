@@ -10,6 +10,18 @@
 
 **Live demo:** http://foursight-alb-668338117.us-east-1.elb.amazonaws.com
 
+**About the demo data:**
+The live dashboard connects to a Shopify development store with real 
+order history. Forecasts are computed from actual order data — not 
+hardcoded. The products shown are from Shopify's standard test catalog 
+(a snowboard shop). Three urgency levels are visible:
+- The 3p Fulfilled Snowboard — 13 days (CRITICAL, red)
+- The Compare at Price Snowboard — 25 days (WARNING, orange)  
+- Everything else — 60–90+ days (OK, green)
+
+Data updates when the fetcher and worker run. Scheduled automation 
+via EventBridge + Lambda is on the roadmap.
+
 ---
 
 ![4Sight Dashboard](dashboard_screenshot.png)
