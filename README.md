@@ -41,10 +41,10 @@ The result is a triage view: red for products less than two weeks out, orange fo
 
 ## Architecture
 
-![4Sight AWS Architecture](architecture.png.png)
-*AWS infrastructure  (solid borders are live, dashed are planned)*
+![4Sight AWS Architecture](architecture.png)
+*Full AWS pipeline -- EventBridge schedules the fetcher Lambda daily, SQS decouples fetcher from worker Lambda, SES sends reorder alerts to merchants.*
 
-The web tier (Flask on Fargate behind an ALB) is live on AWS. The scheduled fetcher path (EventBridge → Lambda → SQS → worker) is on the roadmap; today the fetcher and worker run as in-process modules invoked manually.
+The full pipeline is live on AWS. EventBridge triggers the fetcher Lambda daily at 06:00 UTC. The Lambda calls the Shopify GraphQL API, writes orders and products to RDS, and enqueues one SQS message per shop. The worker Lambda processes each message, computes forecasts, and sends SES email alerts when a product crosses the 14-day threshold. The Flask web app on Fargate behind an ALB serves the dashboard and handles the reorder confirmation flow.
 
 ---
 
@@ -54,14 +54,14 @@ The web tier (Flask on Fargate behind an ALB) is live on AWS. The scheduled fetc
 | ------------------- | ------------------------------------- |
 | Backend             | Python 3.12, Flask 3, SQLAlchemy 2    |
 | Database            | PostgreSQL 15 (RDS) / 17 (local)      |
-| Queue               | Amazon SQS + DLQ *(planned)*          |
-| Compute             | ECS Fargate                           |
-| Scheduler           | Amazon EventBridge *(planned)*        |
-| Email               | Amazon SES *(planned)*                |
+| Queue               | Amazon SQS + DLQ                      |
+| Compute             | ECS Fargate + AWS Lambda              |
+| Scheduler           | Amazon EventBridge                    |
+| Email               | Amazon SES                            |
 | Secrets             | AWS Secrets Manager                   |
 | IaC                 | Terraform (`~> 5.0` AWS provider)     |
 | Container registry  | Amazon ECR                            |
-| Observability       | CloudWatch Logs                       |
+| Observability       | CloudWatch Logs + Alarms              |
 
 ---
 
@@ -154,6 +154,11 @@ Verify against `http://<alb_dns_name>/health`.
 │   ├── models.py            # SQLAlchemy models (shops, products, orders, forecasts)
 │   ├── fetcher.py           # Pulls products + orders from Shopify Admin API
 │   ├── worker.py            # Computes sales velocity + days_until_stockout
+│   ├── notifications.py     # SES email alerts for stockout warnings
+│   ├── lambdas/
+│   │   ├── fetcher_handler.py    # Lambda entry point — scheduled fetcher
+│   │   ├── worker_handler.py     # Lambda entry point — SQS worker
+│   │   └── _db_secret.py         # Loads DB credentials from Secrets Manager
 │   ├── routes/
 │   │   ├── main.py          # /health
 │   │   ├── auth.py          # /install, /callback (Shopify OAuth)
@@ -162,7 +167,7 @@ Verify against `http://<alb_dns_name>/health`.
 │       └── dashboard.html
 ├── db/
 │   └── schema.sql           # Postgres DDL — auto-loaded into Docker volume
-├── terraform/               # 11-file AWS deployment (VPC, ECS, RDS, ALB, ...)
+├── terraform/               # 14-file AWS deployment (VPC, ECS, RDS, ALB, ...)
 ├── docker-compose.yml       # Local Postgres + pgAdmin
 ├── Dockerfile               # python:3.12-slim, runs run.py
 ├── requirements.txt
@@ -173,12 +178,11 @@ Verify against `http://<alb_dns_name>/health`.
 
 ## What's next
 
-- **EventBridge + Lambda fetcher.** Replace the manual `run_fetcher()` call with a scheduled Lambda that fans out one SQS message per shop.
-- **SQS wiring.** Wire the worker as an SQS consumer with a dead-letter queue for poison messages.
-- **SES alerts.** Email merchants when a product crosses the 14-day threshold.
 - **HTTPS on the ALB.** Add an ACM certificate and redirect 80 → 443.
 - **Settings page.** Per-shop thresholds, alert preferences, and a manual "recompute now" button.
 - **Webhook support.** Subscribe to `orders/create` and `inventory_levels/update` for sub-daily updates on high-velocity products.
+- **GDPR webhooks.** Handle the three mandatory Shopify webhooks (customers/redact, shop/redact, customers/data_request) required for App Store submission.
+- **Multi-merchant dashboard.** Remove hardcoded shop_id=1 and filter by the authenticated merchant from the OAuth session.
 
 ---
 

@@ -270,6 +270,12 @@
 
 <main>
 
+  {% if success_message %}
+  <div style="background:#d4edda;color:#155724;padding:12px 16px;border-radius:4px;margin-bottom:16px;">
+    {{ success_message }}
+  </div>
+  {% endif %}
+
   {# ── Stats cards ── #}
   <div class="stats-grid">
     <div class="stat-card">

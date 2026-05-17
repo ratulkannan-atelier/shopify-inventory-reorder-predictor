@@ -1,0 +1,1 @@
+ALTER TABLE forecasts ADD COLUMN IF NOT EXISTS reorder_flagged_at TIMESTAMPTZ;

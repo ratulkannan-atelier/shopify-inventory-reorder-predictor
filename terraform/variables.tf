@@ -44,3 +44,14 @@ variable "shopify_api_scopes" {
   type        = string
   default     = "read_orders,read_products,read_inventory"
 }
+
+variable "fetcher_schedule_expression" {
+  description = "EventBridge schedule expression for the daily fetcher Lambda"
+  type        = string
+  default     = "cron(0 6 * * ? *)"
+}
+
+variable "ses_sender_email" {
+  description = "Verified SES sender address used for reorder alert emails"
+  type        = string
+}

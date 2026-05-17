@@ -4,6 +4,8 @@ import sys
 
 from sqlalchemy import create_engine, text
 
+from app.notifications import send_reorder_alerts
+
 log = logging.getLogger(__name__)
 
 _engine = None
@@ -87,7 +89,8 @@ def run_worker() -> None:
         try:
             with _get_engine().begin() as conn:
                 count = compute_forecasts(shop_id, conn)
-            log.info("[shop_id=%d] wrote %d forecast(s)", shop_id, count)
+                alerts = send_reorder_alerts(shop_id, conn)
+            log.info("[shop_id=%d] wrote %d forecast(s), sent %d alert(s)", shop_id, count, alerts)
         except Exception:
             log.exception("[shop_id=%d] forecast failed", shop_id)
 

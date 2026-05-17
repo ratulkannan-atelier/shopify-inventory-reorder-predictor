@@ -77,18 +77,28 @@ def callback():
     access_token = resp.json()["access_token"]
     log.info("[callback] received access_token for shop=%s token_prefix=%s", shop, access_token[:8])
 
+    shop_resp = requests.get(
+        f"https://{shop}/admin/api/2026-04/shop.json",
+        headers={"X-Shopify-Access-Token": access_token},
+        timeout=10,
+    )
+    shop_resp.raise_for_status()
+    shop_email = shop_resp.json()["shop"]["email"]
+    log.info("[callback] fetched shop email for shop=%s", shop)
+
     log.info("[callback] executing upsert for shop=%s", shop)
     result = db.session.execute(
         text(
             """
             INSERT INTO shops (shop_domain, access_token, email)
-            VALUES (:shop, :token, '')
+            VALUES (:shop, :token, :email)
             ON CONFLICT (shop_domain) DO UPDATE
                 SET access_token = EXCLUDED.access_token,
+                    email        = EXCLUDED.email,
                     updated_at   = NOW()
             """
         ),
-        {"shop": shop, "token": access_token},
+        {"shop": shop, "token": access_token, "email": shop_email},
     )
     log.info("[callback] upsert rowcount=%d", result.rowcount)
     db.session.commit()

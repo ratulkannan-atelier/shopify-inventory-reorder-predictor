@@ -33,5 +33,6 @@ CREATE TABLE forecasts (
     product_id            INTEGER NOT NULL UNIQUE REFERENCES products(id),
     sales_velocity        NUMERIC(10,4) NOT NULL,
     days_until_stockout   INTEGER NOT NULL CHECK (days_until_stockout >= 0),
-    computed_at           TIMESTAMPTZ DEFAULT NOW()
+    computed_at           TIMESTAMPTZ DEFAULT NOW(),
+    reorder_flagged_at    TIMESTAMPTZ
 );
